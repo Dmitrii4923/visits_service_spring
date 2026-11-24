@@ -1,0 +1,77 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: visits-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/hospital
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    circuitbreakers:
+      show-details: always
+    circuitbreakerevents:
+      enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: health-portal-visits-service
+    description: Сервис приёмов, медкарт и расписания
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        ignoreExceptions:
+          - org.springframework.web.server.ResponseStatusException
+    instances:
+      patientService:
+        baseConfig: default
+      doctorService:
+        baseConfig: default
+
+logging:
+  level:
+    root: INFO
+    com.hospital: INFO
